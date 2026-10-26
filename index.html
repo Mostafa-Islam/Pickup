@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pick me up</title>
+<style>
+  html,body { height:100%; margin:0; }
+  body { display:flex; align-items:center; justify-content:center; font-family:system-ui,sans-serif;
+         font-size:22px; text-align:center; padding:20px; background:#f5f7fa; color:#111; }
+  @media (prefers-color-scheme: dark) { body { background:#111; color:#f5f5f5; } }
+</style>
+</head>
+<body>
+<div id="s">📍 Sending location...</div>
+
+<script>
+  const BOT_TOKEN = "8742347201:AAHZiSzuuB2APFeJi3Yvp6GtpjVFE_ZPafE";   // from @BotFather
+  const CHAT_ID   = "6125692662"; // your Telegram chat id
+
+  const s = document.getElementById("s");
+
+  async function send(method, body) {
+    const r = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: CHAT_ID, ...body })
+    });
+    return r.ok;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      const ok = await send("sendLocation", { latitude, longitude });
+      if (ok) await send("sendMessage", { text: `Pick me up 🚗\nhttps://maps.google.com/?q=${latitude},${longitude}` });
+      s.textContent = ok ? "✅ Location sent" : "❌ Failed, try again";
+    },
+    () => { s.textContent = "❌ Please allow location access"; },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+</script>
+</body>
+</html>
